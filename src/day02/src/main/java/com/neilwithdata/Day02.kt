@@ -4,7 +4,24 @@ import java.io.File
 import kotlin.math.abs
 
 class Report(private val levels: List<Int>) {
-    fun isSafe(): Boolean {
+    fun isSafe(allowRemoval: Boolean = false): Boolean {
+        if (isLevelsSafe(levels)) return true
+        if (!allowRemoval) return false
+
+        for (i in levels.indices) {
+            val modifiedLevels = levels.toMutableList()
+            modifiedLevels.removeAt(i)
+
+            if (isLevelsSafe(modifiedLevels)) {
+                return true
+            }
+        }
+
+        // No matter which level we removed, was always unsafe
+        return false
+    }
+
+    private fun isLevelsSafe(levels: List<Int>): Boolean {
         val direction = levels[0].compareTo(levels[1])
         if (direction == 0) return false
 
@@ -39,6 +56,11 @@ fun main() {
         .readLines()
         .map { Report.fromString(it) }
 
+    // Part 1
     val safeCount = reports.count { it.isSafe() }
     println(safeCount)
+
+    // Part 2
+    val safeCountWithRemoval = reports.count { it.isSafe(allowRemoval = true) }
+    println(safeCountWithRemoval)
 }
