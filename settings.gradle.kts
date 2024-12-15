@@ -8,3 +8,5 @@ include("src:day02")
 findProject(":src:day02")?.name = "day02"
 include("src:day03")
 findProject(":src:day03")?.name = "day03"
+include("src:day04")
+findProject(":src:day04")?.name = "day04"
