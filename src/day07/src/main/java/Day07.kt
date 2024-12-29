@@ -2,11 +2,12 @@ import java.io.File
 
 class Equation(
     val result: Long,
-    val numbers: List<Long>
+    private val numbers: List<Long>
 ) {
     enum class Operator {
         ADD,
         MULTIPLY,
+        CONCATENATION
     }
 
     data class Node(
@@ -17,30 +18,12 @@ class Equation(
         var result: Long = 0L
     }
 
-    // Perform a fast rough check if result is within (min, max) bounds
-    private fun fastBoundsCheck(): Boolean {
-        var max = numbers[0]
-        var min = numbers[0]
-        for (n in numbers.drop(1)) {
-            if (max == 1L || n == 1L) {
-                max += n
-                min *= n
-            } else {
-                max *= n
-                min += n
-            }
-        }
-
-        return !(result > max || result < min)
-    }
-
     fun isTrue(): Boolean {
-        if (!fastBoundsCheck()) return false
-
         // Quick tree traversal approach (building the tree as we go / ignoring branches without potential)
         val stack = ArrayDeque<Node>()
         stack.add(Node(Operator.ADD, 0, null))
         stack.add(Node(Operator.MULTIPLY, 0, null))
+        stack.add(Node(Operator.CONCATENATION, 0, null))
 
         while (stack.isNotEmpty()) {
             val node = stack.removeFirst()
@@ -51,6 +34,7 @@ class Equation(
             node.result = when (node.operator) {
                 Operator.ADD -> parentValue + numbers[node.depth + 1]
                 Operator.MULTIPLY -> parentValue * numbers[node.depth + 1]
+                Operator.CONCATENATION -> "${parentValue}${numbers[node.depth + 1]}".toLong()
             }
 
             // chain of operators already exceeds target - no point evaluating further
@@ -80,24 +64,17 @@ class Equation(
                     parent = node
                 )
             )
+
+            stack.add(
+                Node(
+                    operator = Operator.CONCATENATION,
+                    depth = node.depth + 1,
+                    parent = node
+                )
+            )
         }
 
         return false
-    }
-
-    private fun printOperators(node: Node) {
-        println(buildString {
-            var roving: Node? = node
-            while (roving != null) {
-                if (roving.operator == Operator.ADD) {
-                    append(" + ")
-                } else {
-                    append(" x ")
-                }
-
-                roving = roving.parent
-            }
-        })
     }
 
     override fun toString(): String = "$result: ${numbers.joinToString()}"
