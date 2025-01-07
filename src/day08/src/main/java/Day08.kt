@@ -1,4 +1,29 @@
 import java.io.File
+import kotlin.math.min
+
+fun lcm(a: Int, b: Int): Int {
+    for (n in 2..min(a, b)) {
+        if (a % n == 0 && b % n == 0) return n
+    }
+
+    return 1
+}
+
+fun reduce(a: Int, b: Int): Pair<Int, Int> {
+    var numerator = a
+    var denominator = b
+
+    while (true) {
+        val m = lcm(numerator, denominator)
+
+        if (m <= 1) break
+
+        numerator /= m
+        denominator /= m
+    }
+
+    return numerator to denominator
+}
 
 data class Position(val row: Int, val col: Int) {
     operator fun plus(other: Position): Position =
@@ -57,6 +82,7 @@ class Grid(input: List<String>) {
         return antennaPositions
     }
 
+    // Part 1
     fun countAntinodes(): Int {
         val antinodes = mutableSetOf<Position>()
 
@@ -81,6 +107,44 @@ class Grid(input: List<String>) {
         return antinodes.size
     }
 
+    // Part 2
+    fun countInlineAntinodes(): Int {
+        val antinodes = mutableSetOf<Position>()
+
+        for ((_, positions) in antennas) {
+            val combinations = positions.combinations()
+
+            // find the antinode positions for each combination
+            for (combination in combinations) {
+                val first = combination.first
+                val second = combination.second
+
+                var delta = first - second
+
+                // Reduce the gradient fraction to the lowest form
+                val (numerator, denominator) = reduce(delta.row, delta.col)
+                delta = Position(numerator, denominator)
+
+                // Starting from first, move out in both directions
+                antinodes.add(first)
+
+                var next = first + delta
+                while (withinBounds(next)) {
+                    antinodes.add(next)
+                    next += delta
+                }
+
+                next = first - delta
+                while (withinBounds(next)) {
+                    antinodes.add(next)
+                    next -= delta
+                }
+            }
+        }
+
+        return antinodes.size
+    }
+
     private fun charAt(position: Position): Char =
         data[position.row][position.col]
 
@@ -96,7 +160,12 @@ fun main() {
         .readLines()
 
     val grid = Grid(input)
-    val count = grid.countAntinodes()
 
+    // Part 1
+    val count = grid.countAntinodes()
     println(count)
+
+    // Part 2
+    val inlineAntinodes = grid.countInlineAntinodes()
+    println(inlineAntinodes)
 }
