@@ -84,14 +84,106 @@ class Disk(diskMap: String) {
     }
 }
 
+class FileDisk(diskMap: String) {
+    private val fileMap: MutableMap<Int, IntRange> = mutableMapOf()
+    private val freeList: MutableList<IntRange> = mutableListOf()
+
+    init {
+        var currFileId = 0
+        var currDataIndex = 0
+        var isFile = true
+        for (c in diskMap) {
+            val size = c.digitToInt()
+
+            val range = currDataIndex until (currDataIndex + size)
+
+            if (isFile) {
+                fileMap[currFileId] = range
+                currFileId++
+            } else {
+                freeList += range
+            }
+
+            isFile = !isFile
+            currDataIndex = range.last + 1
+        }
+    }
+
+    private fun findFree(minSize: Int, before: Int): Int {
+        for ((index, block) in freeList.withIndex()) {
+            if (block.count() >= minSize && block.last < before) {
+                return index
+            }
+        }
+
+        return -1
+    }
+
+    fun print() {
+        println("Files")
+        for ((file, range) in fileMap) {
+            println("$file: $range")
+        }
+
+        println("Free")
+        for (range in freeList) {
+            println("$range")
+        }
+    }
+
+    fun compact() {
+        var currFile = fileMap.maxOf { it.key }
+        while (currFile >= 0) {
+            val file = fileMap[currFile]!!
+            val fileSize = file.count()
+
+            val freeIndex = findFree(fileSize, file.first)
+
+            if (freeIndex != -1) {
+                val freeBlock = freeList[freeIndex]
+
+                // Update file location
+                fileMap[currFile] = freeBlock.first until (freeBlock.first + fileSize)
+
+                // Free block needs to be deleted or reduced in size
+                if (freeBlock.count() == fileSize) {
+                    freeList.removeAt(freeIndex)
+                } else {
+                    freeList[freeIndex] = (freeBlock.first + fileSize)..freeBlock.last
+                }
+            }
+
+            currFile--
+        }
+    }
+
+    fun calculateChecksum(): Long {
+        var sum = 0L
+
+        for ((fileId, range) in fileMap) {
+            for (index in range) {
+                sum += fileId * index
+            }
+        }
+
+        return sum
+    }
+}
+
 fun main() {
     val input = File("data/day09_input.txt")
         .readLines()
         .first()
 
+    // Part 1
     val disk = Disk(input)
     disk.compact()
     println(disk.calculateChecksum())
+
+    // Part 2
+    val disk2 = FileDisk(input)
+    disk2.compact()
+    println(disk2.calculateChecksum())
 }
 
 
