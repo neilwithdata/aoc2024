@@ -20,3 +20,5 @@ include("src:day08")
 findProject(":src:day08")?.name = "day08"
 include("src:day09")
 findProject(":src:day09")?.name = "day09"
+include("src:day10")
+findProject(":src:day10")?.name = "day10"
