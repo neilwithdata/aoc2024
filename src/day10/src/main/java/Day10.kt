@@ -28,7 +28,7 @@ class Grid(input: List<String>) {
             }
         }
 
-    fun trailheadsSum(): Int {
+    fun trailheadsSum(distinct: Boolean): Int {
         var total = 0
 
         for (row in 0 until numRows) {
@@ -36,7 +36,7 @@ class Grid(input: List<String>) {
                 val position = Position(row, col)
 
                 if (digitAt(position) == 0) {
-                    total += calculateTrailheadScore(position)
+                    total += calculateTrailheadScore(position, distinct)
                 }
             }
         }
@@ -44,8 +44,11 @@ class Grid(input: List<String>) {
         return total
     }
 
-    private fun calculateTrailheadScore(startPosition: Position): Int {
-        val endpoints = mutableSetOf<Position>()
+    private fun calculateTrailheadScore(
+        startPosition: Position,
+        distinct: Boolean
+    ): Int {
+        val endpoints = mutableListOf<Position>()
 
         val progress = mutableListOf(startPosition)
         while (progress.isNotEmpty()) {
@@ -65,7 +68,11 @@ class Grid(input: List<String>) {
             }
         }
 
-        return endpoints.size
+        return if (distinct) {
+            endpoints.toSet().size
+        } else {
+            endpoints.size
+        }
     }
 
     private fun digitAt(position: Position): Int =
@@ -78,11 +85,11 @@ class Grid(input: List<String>) {
         (row in 0 until numRows) && (col in 0 until numCols)
 }
 
-
 fun main() {
     val input = File("data/day10_input.txt")
         .readLines()
 
     val grid = Grid(input)
-    println(grid.trailheadsSum())
+    println(grid.trailheadsSum(distinct = true))
+    println(grid.trailheadsSum(distinct = false))
 }
