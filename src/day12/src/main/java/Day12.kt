@@ -23,6 +23,11 @@ data class Position(val row: Int, val col: Int) {
     }
 }
 
+data class Perimeter(
+    val position: Position,
+    val direction: Direction
+)
+
 class Region(private val id: Char) {
     private val plots = mutableSetOf<Position>()
 
@@ -32,24 +37,80 @@ class Region(private val id: Char) {
 
     operator fun contains(position: Position): Boolean = position in plots
 
-    fun price(): Int = area() * perimeter()
+    fun price(): Int = area() * findPerimeters().size
+
+    fun newPrice(): Int = area() * sideCount()
 
     private fun area(): Int {
         return plots.size
     }
 
-    private fun perimeter(): Int {
-        var perimeter = 0
+    private fun sideCount(): Int {
+        val perimeters = findPerimeters().toMutableList()
+
+        val sides = mutableListOf<List<Perimeter>>()
+        while (perimeters.isNotEmpty()) {
+            val first = perimeters.first()
+
+            val side = captureSide(first, perimeters)
+            sides.add(side)
+
+            perimeters.removeAll(side)
+        }
+
+        return sides.count()
+    }
+
+    private fun captureSide(perimeter: Perimeter, perimeters: List<Perimeter>): List<Perimeter> {
+        val walkDirection = if (perimeter.direction in listOf(Direction.NORTH, Direction.SOUTH)) {
+            Direction.EAST.vector
+        } else {
+            Direction.NORTH.vector
+        }
+
+        val side = mutableListOf(perimeter)
+
+        // Walk stepVector as far as you can
+        fun walk(stepVector: Position) {
+            var curr = perimeter.position + stepVector
+
+            while (true) {
+                val candidate = Perimeter(curr, perimeter.direction)
+                if (candidate in perimeters) {
+                    side.add(candidate)
+                } else {
+                    return
+                }
+
+                curr += stepVector
+            }
+        }
+
+        walk(walkDirection)
+        walk(-walkDirection)
+
+        return side
+    }
+
+    private fun findPerimeters(): Set<Perimeter> {
+        val perimeters = mutableSetOf<Perimeter>()
 
         for (plot in plots) {
-            for (neighbour in plot.neighbours()) {
+            Direction.entries.forEach { direction ->
+                val neighbour = plot + direction.vector
+
                 if (neighbour !in this) {
-                    perimeter++
+                    perimeters.add(
+                        Perimeter(
+                            position = plot,
+                            direction = direction
+                        )
+                    )
                 }
             }
         }
 
-        return perimeter
+        return perimeters
     }
 
     override fun toString(): String {
@@ -126,6 +187,11 @@ fun main() {
     val grid = Grid(input)
     val regions = grid.findRegions()
 
+    // Part 1
     val total = regions.sumOf { it.price() }
     println(total)
+
+    // Part 2
+    val newTotal = regions.sumOf { it.newPrice() }
+    println(newTotal)
 }
