@@ -10,8 +10,8 @@ data class Problem(
     val a12: Int, // b
     val a21: Int, // c
     val a22: Int, // d
-    val b11: Int,
-    val b21: Int
+    val b11: Long,
+    val b21: Long
 ) {
     // matrix is always invertible and rows are linearly independent
     fun solve(): Pair<Double, Double> {
@@ -24,24 +24,36 @@ data class Problem(
     }
 }
 
-
 fun main() {
     val input = File("data/day13_input.txt")
         .readLines()
 
+    // Part 1
     val problems = readProblems(input)
+    println(tokenCount(problems))
 
-    var tokenCost = 0
+    // Part 2
+    val newProblems = problems.map {
+        it.copy(
+            b11 = it.b11 + 10000000000000L,
+            b21 = it.b21 + 10000000000000L
+        )
+    }
+    println(tokenCount(newProblems))
+}
+
+private fun tokenCount(problems: List<Problem>): Long {
+    var tokenCost = 0L
 
     for (problem in problems) {
         val (aPresses, bPresses) = problem.solve()
 
-        if (listOf(aPresses, bPresses).all { it.isWholeNumber() && it in 0.0..100.0 }) {
-            tokenCost += (aPresses * 3 + bPresses).toInt()
+        if (listOf(aPresses, bPresses).all { it.isWholeNumber() && it >= 0.0 }) {
+            tokenCost += (aPresses * 3 + bPresses).toLong()
         }
     }
 
-    println("total token cost: $tokenCost")
+    return tokenCost
 }
 
 private fun readProblems(input: List<String>): List<Problem> {
@@ -67,8 +79,8 @@ private fun readProblems(input: List<String>): List<Problem> {
             a12 = a12.toInt(),
             a21 = a21.toInt(),
             a22 = a22.toInt(),
-            b11 = b11.toInt(),
-            b21 = b21.toInt()
+            b11 = b11.toLong(),
+            b21 = b21.toLong()
         )
 
         lineIndex++
